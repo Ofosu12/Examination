@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <title>Kenneth</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <script src="https://aframe.io/releases/1.5.0/aframe.min.js"></script>
+    <!-- <script src="./scripts/aframe.min.js"></script> -->
+    
+    <script src="https://unpkg.com/aframe-environment-component@1.3.3/dist/aframe-environment-component.min.js"></script>
+  </head>
+  <body>
+    <a-scene>
+      <a-assets>
+        <img id="grass" src="./textures/grass1.jpg" alt="" />
+        <img id="sky" src="./textures/sunny-sky1.jpg" alt="" />
+        <img id="house" alt="./assets/scene.gltf" />
+      </a-assets>
+
+      <!-- Camera placed in front of house (house is at x=38, z=5) -->
+      <!-- We sit at z=30, same x, and rotate -90 on Y to face negative Z (toward house) -->
+      <a-entity position="38 4 30" rotation="0 180 0">
+        <a-camera look-controls="reverseMouseDrag: false" wasd-controls></a-camera>
+      </a-entity>
+
+      <!-- Ambient Light -->
+      <a-entity light="type: ambient;"></a-entity>
+
+      <!-- Directional Light -->
+      <a-entity
+        light="type: directional; color: #EEE; intensity: 0.5"
+        position="-1 1 0"
+      ></a-entity>
+
+      <a-sky
+        src="./textures/sunny-sky.jpg"
+        background-repeat="no-repeat"
+        rotation="0 64 0"
+      ></a-sky>
+
+      <a-plane
+        material="src: #grass; repeat: 5000 5000"
+        rotation="-90 0 0"
+        scale="10000 10000 1"
+      ></a-plane>
+
+      <a-gltf-model
+        position="38 0 5"
+        scale="1 1 1"
+        src="./assets/scene.gltf"
+      ></a-gltf-model>
+
+    </a-scene>
+
+    <script>
+      AFRAME.registerComponent("modify-materials", {
+        init: function () {
+          this.el.addEventListener("model-loaded", () => {
+            const obj = this.el.getObject3D("mesh");
+            obj.traverse((node) => {
+              if (node.isMesh) {
+                node.material.color.set("black");
+              }
+            });
+          });
+        },
+      });
+
+      // Auto-aim camera at house center after scene loads
+      document.querySelector('a-scene').addEventListener('loaded', function () {
+        const cameraRig = document.querySelector('[position="38 4 30"]');
+        const THREE = AFRAME.THREE;
+
+        const camPos = new THREE.Vector3(38, 4, 30);
+        const housePos = new THREE.Vector3(38, 2, 5);
+
+        const direction = new THREE.Vector3().subVectors(housePos, camPos).normalize();
+        const euler = new THREE.Euler();
+        const quat = new THREE.Quaternion().setFromUnitVectors(
+          new THREE.Vector3(0, 0, -1),
+          direction
+        );
+        euler.setFromQuaternion(quat, 'YXZ');
+
+        const yDeg = THREE.MathUtils.radToDeg(euler.y);
+        const xDeg = THREE.MathUtils.radToDeg(euler.x);
+
+        cameraRig.setAttribute('rotation', `${xDeg} ${yDeg} 0`);
+      });
+    </script>
+
+  </body>
+</html>
